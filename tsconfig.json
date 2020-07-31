@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "newLine": "lf",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "removeComments": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "target": "es2017",
+    "experimentalDecorators": true,
+    "outDir": "dist",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "typeRoots": ["node_modules/@types", "typings"],
+    "types": [
+      "mocha",
+      "node"
+    ]
+  },
+
+  "exclude": ["node_modules", "dist", "test", "gulpfile.ts"]
+}

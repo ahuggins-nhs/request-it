@@ -1,0 +1,48 @@
+{
+  "name": "request-it-client",
+  "version": "1.0.0",
+  "description": "Yet another client library for working with http/s requests.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "http",
+    "simple",
+    "util",
+    "utility"
+  ],
+  "scripts": {
+    "test": "gulp nyc",
+    "prepack": "gulp tsc",
+    "postpack": "gulp clean"
+  },
+  "author": "Aaron Huggins <ahuggins@nethealthshops.com>",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@types/gulp": "^4.0.6",
+    "@types/gulp-shell": "^0.7.0",
+    "@types/mocha": "^8.0.0",
+    "@types/nock": "^11.1.0",
+    "@types/node": "^14.0.27",
+    "@types/tough-cookie": "^4.0.0",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-shell": "^0.8.0",
+    "mocha": "^8.1.0",
+    "nock": "^13.0.3",
+    "nyc": "^15.1.0",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "tough-cookie": "^4.0.0"
+  }
+}
