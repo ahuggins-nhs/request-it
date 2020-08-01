@@ -4,11 +4,14 @@ import { Socket } from 'net'
 import { RequestOptions, IncomingMessage } from './Interfaces'
 import { RequestItCookieJar } from './RequestItCookieJar'
 
+const MAX_REDIRECTS = 3
+const VALID_REDIRECT: ReadonlySet<number> = new Set([300, 301, 302, 303, 304, 307, 308])
+
 /** Node.js library for Promise-based, asynchronous http/s requests. */
 export class RequestIt {
   /** @param {RequestOptions} [options={}] - Default options. Object like NodeJS RequestOptions, but with additional parameters accepted. */
   constructor (options: RequestOptions = {}) {
-    this.options = options
+    this.options = this.getSafeOptions(options)
 
     if (this.isNullOrUndefined(this.options.cookieJar)) {
       this.cookieJar = new RequestItCookieJar()
@@ -37,6 +40,10 @@ export class RequestIt {
       options = { url: options }
     }
 
+    if (this.isNullOrUndefined(options.followRedirect)) {
+      options.followRedirect = true
+    }
+
     return {
       ...this.options,
       ...options
@@ -53,6 +60,7 @@ export class RequestIt {
     delete options.url
     delete options.cookieJar
     delete options.params
+    delete options.followRedirect
 
     return options
   }
@@ -123,10 +131,12 @@ export class RequestIt {
 
   /** Base method for making a request.
    * @param {RequestOptions|string|URL} [options={}] - Options to override the defaults, or a url.
-   * @returns {Promise<IncomingMessage|object>} The IncomingMessage object with parsed body and RawBody, or the response body.
+   * @returns {Promise<IncomingMessage>} The IncomingMessage object with parsed body and RawBody.
    */
-  async go (options: RequestOptions | string | URL = {}): Promise<IncomingMessage> {
+  async go (options?: RequestOptions | string | URL): Promise<IncomingMessage>
+  async go (options: RequestOptions | string | URL = {}, redirectCount: number = 0): Promise<IncomingMessage> {
     const self = this
+    redirectCount = typeof redirectCount === 'number' ? redirectCount : 0
     options = this.getSafeOptions(options)
 
     const promise = new Promise<IncomingMessage>((resolve, reject) => {
@@ -138,7 +148,8 @@ export class RequestIt {
           json,
           rejectBadJson,
           responseType,
-          cookieJar
+          cookieJar,
+          followRedirect
         } = options as RequestOptions
         const internalUrl = new URL(url as string)
         const internalBody = self.prepareBody(body, json)
@@ -174,6 +185,19 @@ export class RequestIt {
               response.on('error', error => reject(error))
               response.on('end', () => {
                 try {
+                  if (
+                    followRedirect &&
+                    response.headers.location &&
+                    VALID_REDIRECT.has(response.statusCode) &&
+                    redirectCount < MAX_REDIRECTS
+                  ) {
+                    return (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1)
+                      .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
+                      .catch((error: any) => reject(error))
+                  } else if (redirectCount === MAX_REDIRECTS) {
+                    reject(new Error('The number of redirects has exceeded the max of ' + MAX_REDIRECTS.toString()))
+                  }
+
                   const rawResponse = Buffer.concat(responseBufs)
                   const rawBody = Buffer.concat(bodyBufs)
                   response.body = rawBody.toString('utf8')

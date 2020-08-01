@@ -1,6 +1,6 @@
 import 'mocha'
 import * as nock from 'nock'
-import { RequestIt } from '../index'
+import { RequestIt, RequestItCookieJar } from '../index'
 import { CookieJar } from 'tough-cookie'
 import * as assert from 'assert'
 import * as http from 'http'
@@ -117,6 +117,17 @@ describe('RequestIt', () => {
     assert.deepStrictEqual(cookie.value, 'testing')
   })
 
+  it('should should return same instance of RequestItCookieJar', async () => {
+    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing']})
+
+    const originCookieJar = new RequestItCookieJar()
+    const { cookieJar } = await RequestIt.get({ url, cookieJar: originCookieJar })
+    const cookie = await originCookieJar.findCookie('example.sample', '/', 'cookie1')
+
+    assert.deepStrictEqual(cookieJar, originCookieJar)
+    assert.deepStrictEqual(cookie.value, 'testing')
+  })
+
   it('should capture the raw response on a socket', async () => {
     const json = JSON.stringify(sample)
     const server = http.createServer((req, res) => {
@@ -130,5 +141,26 @@ describe('RequestIt', () => {
     server.close()
 
     assert.strictEqual(rawResponse.toString('utf8').includes(json), true)
+  })
+
+  it('should handle redirects', async () => {
+    nock(origin).get(path).reply(304, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample').get('/path2').reply(200, sample)
+    nock(origin).get(path).reply(301, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample').get('/path2').reply(302, '', { Location: 'https://example2.sample/path3' })
+    nock('https://example2.sample').get('/path3').reply(303, '', { Location: 'https://example2.sample/path4' })
+    nock('https://example2.sample').get('/path4').reply(303, '', { Location: 'https://example2.sample/path5' })
+    nock(origin).get(path).reply(300, '', { Location: 'https://example2.sample/path2' })
+
+    const { body } = await RequestIt.get(url)
+
+    assert.deepStrictEqual(body, sample)
+    await assert.rejects(async () => {
+      await RequestIt.get(url)
+    })
+
+    const { statusCode } = await RequestIt.get({ url, followRedirect: false })
+
+    assert.strictEqual(statusCode, 300)
   })
 })

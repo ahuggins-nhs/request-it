@@ -9,6 +9,7 @@ export interface RequestOptions extends http.RequestOptions {
   json?: object | any[]
   responseType?: 'json'
   rejectBadJson?: boolean
+  followRedirect?: boolean
   params?: { [key: string]: string | boolean | number }
 }
 

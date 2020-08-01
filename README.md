@@ -1,6 +1,6 @@
 # Request-It
 
-A stupidly simple HTTP client for Node-JS that should just work. Built-in support for cookies and JSON. No follow-redirects magic.
+A stupidly simple HTTP client for Node-JS that should just work. Built-in support for cookies, JSON, and up to 3 redirects.
 
 ## Usage
 Install via NPM and require in your project. Then request it and go!
@@ -49,6 +49,7 @@ See NodeJS docs for [details](https://nodejs.org/docs/latest-v12.x/api/http.html
   - `json?: object | any[]`
   - `responseType?: 'json'`
   - `rejectBadJson?: boolean`
+  - `followRedirect?: boolean`
   - `params?: { [key: string]: string | boolean | number }`
 
 ### `interface IncomingMessage`
