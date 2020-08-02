@@ -13,10 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "typeRoots": ["node_modules/@types", "typings"],
-    "types": [
-      "mocha",
-      "node"
-    ]
+    "types": ["mocha", "node"]
   },
 
   "exclude": ["node_modules", "dist", "test", "gulpfile.ts"]

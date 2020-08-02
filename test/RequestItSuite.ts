@@ -12,14 +12,30 @@ const sample = { hello: 'world!' }
 
 describe('RequestIt', () => {
   it('should make generic requests', async () => {
-    nock(origin).get(path).reply(200, sample)
-    nock(origin).get(path).reply(200, sample)
-    nock(origin).post(path).reply(200, sample)
-    nock(origin).patch(path).reply(200, sample)
-    nock(origin).put(path).reply(200, sample)
-    nock(origin).delete(path).reply(200, sample)
-    nock(origin).get(path).reply(200, 'sample', { 'Content-Type': 'application/json' })
-    nock(origin).get(path).reply(200, 'sample', { 'Content-Type': 'application/json' })
+    nock(origin)
+      .get(path)
+      .reply(200, sample)
+    nock(origin)
+      .get(path)
+      .reply(200, sample)
+    nock(origin)
+      .post(path)
+      .reply(200, sample)
+    nock(origin)
+      .patch(path)
+      .reply(200, sample)
+    nock(origin)
+      .put(path)
+      .reply(200, sample)
+    nock(origin)
+      .delete(path)
+      .reply(200, sample)
+    nock(origin)
+      .get(path)
+      .reply(200, 'sample', { 'Content-Type': 'application/json' })
+    nock(origin)
+      .get(path)
+      .reply(200, 'sample', { 'Content-Type': 'application/json' })
 
     const { body: body0 } = await RequestIt.go(url.toString())
     const { body: body1 } = await RequestIt.get(url)
@@ -37,7 +53,7 @@ describe('RequestIt', () => {
     assert.deepStrictEqual(body5, sample)
     assert.strictEqual(json() instanceof Error, true)
     assert.throws(() => {
-      (new RequestIt() as any).getProtocol(null)
+      ;(new RequestIt() as any).getProtocol(null)
     })
     await assert.rejects(async () => {
       await RequestIt.get({ url, rejectBadJson: true })
@@ -45,7 +61,9 @@ describe('RequestIt', () => {
   })
 
   it('should make request with custom cookie jar', async () => {
-    nock(origin).get(path).reply(200, sample)
+    nock(origin)
+      .get(path)
+      .reply(200, sample)
 
     const { body, cookieJar } = await new RequestIt({
       url,
@@ -57,7 +75,9 @@ describe('RequestIt', () => {
   })
 
   it('should parse response when not explicitly application/json', async () => {
-    nock(origin).get(path).reply(200, sample, { 'content-type': 'text/plain' })
+    nock(origin)
+      .get(path)
+      .reply(200, sample, { 'content-type': 'text/plain' })
 
     const { body } = await RequestIt.get({
       url,
@@ -68,8 +88,12 @@ describe('RequestIt', () => {
   })
 
   it('should stringify request to json', async () => {
-    nock(origin).post(path).reply(200, sample)
-    nock(origin).post(path).reply(200, sample)
+    nock(origin)
+      .post(path)
+      .reply(200, sample)
+    nock(origin)
+      .post(path)
+      .reply(200, sample)
 
     const { body: body1 } = await RequestIt.post({
       url,
@@ -85,7 +109,9 @@ describe('RequestIt', () => {
   })
 
   it('should take custom headers', async () => {
-    nock(origin).get(path).reply(200, sample, { 'content-type': 'text/plain' })
+    nock(origin)
+      .get(path)
+      .reply(200, sample, { 'content-type': 'text/plain' })
 
     const { body } = await RequestIt.get({
       url,
@@ -97,7 +123,9 @@ describe('RequestIt', () => {
   })
 
   it('should take custom url parameters', async () => {
-    nock(origin).get(path + '?take=1').reply(200, sample)
+    nock(origin)
+      .get(path + '?take=1')
+      .reply(200, sample)
 
     const { body } = await RequestIt.get({
       url,
@@ -108,7 +136,9 @@ describe('RequestIt', () => {
   })
 
   it('should write cookies to cookie jar', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
+    nock(origin)
+      .get(path)
+      .reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
 
     const { body, cookieJar } = await RequestIt.get({ url })
     const cookie = await cookieJar.findCookie('test.example.sample', '/', 'cookie1')
@@ -118,7 +148,11 @@ describe('RequestIt', () => {
   })
 
   it('should ignore invalid domain cookies', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing; path=/; domain=.hello.world'] })
+    nock(origin)
+      .get(path)
+      .reply(200, sample, {
+        'Set-Cookie': ['cookie1=testing; path=/; domain=.hello.world']
+      })
 
     const { cookieJar } = await RequestIt.get({ url })
     const cookie = await cookieJar.findCookie('hello.world', '/', 'cookie1')
@@ -127,10 +161,15 @@ describe('RequestIt', () => {
   })
 
   it('should should return same instance of RequestItCookieJar', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
+    nock(origin)
+      .get(path)
+      .reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
 
     const originCookieJar = new RequestItCookieJar()
-    const { cookieJar } = await RequestIt.get({ url, cookieJar: originCookieJar })
+    const { cookieJar } = await RequestIt.get({
+      url,
+      cookieJar: originCookieJar
+    })
     const cookie = await originCookieJar.findCookie('test.example.sample', '/', 'cookie1')
 
     assert.deepStrictEqual(cookieJar, originCookieJar)
@@ -140,7 +179,12 @@ describe('RequestIt', () => {
   it('should capture the raw response on a socket', async () => {
     const json = JSON.stringify(sample)
     const server = http.createServer((req, res) => {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Length': json.length }).end(json)
+      res
+        .writeHead(200, {
+          'Content-Type': 'application/json',
+          'Content-Length': json.length
+        })
+        .end(json)
     })
 
     server.listen(10000)
@@ -153,16 +197,30 @@ describe('RequestIt', () => {
   })
 
   it('should handle redirects', async () => {
-    nock(origin).get(path).reply(304, '', { Location: 'https://example2.sample/path2' })
-    nock('https://example2.sample').get('/path2').reply(200, sample)
-    nock(origin).get(path).reply(301, '', { Location: 'https://example2.sample/path2' })
-    nock('https://example2.sample').get('/path2').reply(302, '', {
-      Location: 'https://example2.sample/path3',
-      'Set-Cookie': ['cookie1=testing']
-    })
-    nock('https://example2.sample').get('/path3').reply(303, '', { Location: 'https://example2.sample/path4' })
-    nock('https://example2.sample').get('/path4').reply(303, '', { Location: 'https://example2.sample/path5' })
-    nock(origin).get(path).reply(300, '', { Location: 'https://example2.sample/path2' })
+    nock(origin)
+      .get(path)
+      .reply(304, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample')
+      .get('/path2')
+      .reply(200, sample)
+    nock(origin)
+      .get(path)
+      .reply(301, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample')
+      .get('/path2')
+      .reply(302, '', {
+        Location: 'https://example2.sample/path3',
+        'Set-Cookie': ['cookie1=testing']
+      })
+    nock('https://example2.sample')
+      .get('/path3')
+      .reply(303, '', { Location: 'https://example2.sample/path4' })
+    nock('https://example2.sample')
+      .get('/path4')
+      .reply(303, '', { Location: 'https://example2.sample/path5' })
+    nock(origin)
+      .get(path)
+      .reply(300, '', { Location: 'https://example2.sample/path2' })
 
     const { body } = await RequestIt.get(url)
 
@@ -177,7 +235,9 @@ describe('RequestIt', () => {
   })
 
   it('should handle forms', async () => {
-    nock(origin).get(path).reply(200, sample)
+    nock(origin)
+      .get(path)
+      .reply(200, sample)
 
     const { body } = await RequestIt.get({ url, form: { hello: 'world' } })
 

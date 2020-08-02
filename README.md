@@ -3,6 +3,7 @@
 A stupidly simple HTTP client for Node-JS that should just work. Built-in support for cookies, JSON, and up to 3 redirects.
 
 ## Usage
+
 Install via NPM and require in your project. Then request it and go!
 
 ```js
@@ -13,7 +14,6 @@ const { RequestIt } = require('request-it-client')
 
   console.log(res.body.data.first_name) // expected result: Janet
 })()
-
 ```
 
 ## API

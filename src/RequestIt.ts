@@ -66,18 +66,18 @@ export class RequestIt {
   }
 
   private jsonify (body: string | Buffer | object | any[], json: any): boolean {
-    if (
-      !this.isNullOrUndefined(json) ||
-      Array.isArray(body) ||
-      (typeof body === 'object' && !Buffer.isBuffer(body))
-    ) {
+    if (!this.isNullOrUndefined(json) || Array.isArray(body) || (typeof body === 'object' && !Buffer.isBuffer(body))) {
       return true
     }
 
     return false
   }
 
-  private prepareBody (body: string | Buffer | object | any[], json: any, form: { [key: string]: string | boolean | number }): string | Buffer {
+  private prepareBody (
+    body: string | Buffer | object | any[],
+    json: any,
+    form: { [key: string]: string | boolean | number }
+  ): string | Buffer {
     if (this.jsonify(body, json)) {
       return JSON.stringify(body || json)
     }
@@ -93,7 +93,13 @@ export class RequestIt {
     return body as string | Buffer
   }
 
-  private prepareOptions (options: RequestOptions, body: string | Buffer, cookieString: string, jsonify: boolean, formify: boolean): RequestOptions {
+  private prepareOptions (
+    options: RequestOptions,
+    body: string | Buffer,
+    cookieString: string,
+    jsonify: boolean,
+    formify: boolean
+  ): RequestOptions {
     options = this.cleanUpOptions(options)
     let contentTypeExists = false
     let contentLengthExists = false
@@ -168,9 +174,8 @@ export class RequestIt {
         const protocol = self.getProtocol(internalUrl) === 'https' ? https : http
         const jsonify = self.jsonify(body, json)
         const formify = !jsonify && typeof form !== 'undefined'
-        const internalCookieJar = typeof cookieJar === 'undefined'
-          ? self.cookieJar
-          : RequestItCookieJar.fromCookieJar(cookieJar)
+        const internalCookieJar =
+          typeof cookieJar === 'undefined' ? self.cookieJar : RequestItCookieJar.fromCookieJar(cookieJar)
         const internalOptions = self.prepareOptions(
           options as RequestOptions,
           internalBody,
@@ -188,85 +193,97 @@ export class RequestIt {
         }
 
         const responseBufs: Buffer[] = []
-        const req = protocol.request(
-          internalUrl,
-          internalOptions,
-          (response: IncomingMessage) => {
-            try {
-              const bodyBufs: Buffer[] = []
-    
-              response.on('data', (data: Buffer) => bodyBufs.push(data))
-              response.on('error', error => reject(error))
-              response.on('end', () => {
-                try {
-                  if (
-                    followRedirect &&
-                    response.headers.location &&
-                    VALID_REDIRECT.has(response.statusCode) &&
-                    redirectCount < MAX_REDIRECTS
-                  ) {
+        const req = protocol.request(internalUrl, internalOptions, (response: IncomingMessage) => {
+          try {
+            const bodyBufs: Buffer[] = []
 
-                    if (typeof response.headers['set-cookie'] === 'undefined') {
-                      return (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1)
-                        .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
-                        .catch((error: any) => reject(error))
-                    } else {
-                      const promises = response.headers['set-cookie']
-                        .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
-
-                      return Promise.all(promises)
-                        .then(() => (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1).then((incomingMessage: IncomingMessage) => resolve(incomingMessage)))
-                        .catch((error: any) => reject(error))
-                    }
-                  } else if (redirectCount === MAX_REDIRECTS) {
-                    reject(new Error('The number of redirects has exceeded the max of ' + MAX_REDIRECTS.toString()))
-                  }
-
-                  const rawResponse = Buffer.concat(responseBufs)
-                  const rawBody = Buffer.concat(bodyBufs)
-                  response.body = rawBody.toString('utf8')
-                  response.cookieJar = internalCookieJar
-                  response.rawBody = rawBody
-                  response.rawResponse = rawResponse
-                  response.json = function json () {
-                    try {
-                      return JSON.parse(rawBody.toString('utf8'))
-                    } catch (err) {
-                      if (rejectBadJson) {
-                        throw err
-                      } else {
-                        return err
-                      }
-                    }
-                  }
-
-                  if (
-                    responseType === 'json' ||
-                    (
-                      typeof response.headers['content-type'] === 'string' &&
-                      response.headers['content-type'].toLowerCase().startsWith('application/json')
-                    )
-                  ) {
-                    response.body = response.json()
-                  }
-
+            response.on('data', (data: Buffer) => bodyBufs.push(data))
+            response.on('error', error => reject(error))
+            response.on('end', () => {
+              try {
+                if (
+                  followRedirect &&
+                  response.headers.location &&
+                  VALID_REDIRECT.has(response.statusCode) &&
+                  redirectCount < MAX_REDIRECTS
+                ) {
                   if (typeof response.headers['set-cookie'] === 'undefined') {
-                    resolve(response)
+                    return (self as any)
+                      .go(
+                        {
+                          ...(options as RequestOptions),
+                          url: response.headers.location
+                        },
+                        redirectCount + 1
+                      )
+                      .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
+                      .catch((error: any) => reject(error))
                   } else {
-                    const promises = response.headers['set-cookie']
-                      .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
+                    const promises = response.headers['set-cookie'].map(cookie =>
+                      internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {})
+                    )
 
-                    Promise.all(promises).then(() => resolve(response))
+                    return Promise.all(promises)
+                      .then(() =>
+                        (self as any)
+                          .go(
+                            {
+                              ...(options as RequestOptions),
+                              url: response.headers.location
+                            },
+                            redirectCount + 1
+                          )
+                          .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
+                      )
+                      .catch((error: any) => reject(error))
                   }
-                } catch (err) {
-                  reject(err)
+                } else if (redirectCount === MAX_REDIRECTS) {
+                  reject(new Error('The number of redirects has exceeded the max of ' + MAX_REDIRECTS.toString()))
                 }
-              })
-            } catch (err) {
-              reject(err)
-            }
+
+                const rawResponse = Buffer.concat(responseBufs)
+                const rawBody = Buffer.concat(bodyBufs)
+                response.body = rawBody.toString('utf8')
+                response.cookieJar = internalCookieJar
+                response.rawBody = rawBody
+                response.rawResponse = rawResponse
+                response.json = function json () {
+                  try {
+                    return JSON.parse(rawBody.toString('utf8'))
+                  } catch (err) {
+                    if (rejectBadJson) {
+                      throw err
+                    } else {
+                      return err
+                    }
+                  }
+                }
+
+                if (
+                  responseType === 'json' ||
+                  (typeof response.headers['content-type'] === 'string' &&
+                    response.headers['content-type'].toLowerCase().startsWith('application/json'))
+                ) {
+                  response.body = response.json()
+                }
+
+                if (typeof response.headers['set-cookie'] === 'undefined') {
+                  resolve(response)
+                } else {
+                  const promises = response.headers['set-cookie'].map(cookie =>
+                    internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {})
+                  )
+
+                  Promise.all(promises).then(() => resolve(response))
+                }
+              } catch (err) {
+                reject(err)
+              }
+            })
+          } catch (err) {
+            reject(err)
           }
-        )
+        })
         req.on('error', error => reject(error))
         req.on('socket', (socket: Socket) => {
           socket.on('data', (data: Buffer) => responseBufs.push(data))

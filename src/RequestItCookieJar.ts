@@ -35,7 +35,7 @@ export class RequestItCookieJar extends CookieJar {
     return await this.store.findCookie(domain, path, key)
   }
 
-  static fromCookieJar(cookieJar: CookieJar) {
+  static fromCookieJar (cookieJar: CookieJar) {
     if (cookieJar instanceof RequestItCookieJar) return cookieJar
 
     const requestItJar: RequestItCookieJar = Object.setPrototypeOf(
