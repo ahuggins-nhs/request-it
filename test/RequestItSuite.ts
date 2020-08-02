@@ -108,7 +108,7 @@ describe('RequestIt', () => {
   })
 
   it('should write cookies to cookie jar', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing']})
+    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
 
     const { body, cookieJar } = await RequestIt.get({ url })
     const cookie = await cookieJar.findCookie('test.example.sample', '/', 'cookie1')
@@ -118,7 +118,7 @@ describe('RequestIt', () => {
   })
 
   it('should ignore invalid domain cookies', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing; path=/; domain=.hello.world']})
+    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing; path=/; domain=.hello.world'] })
 
     const { cookieJar } = await RequestIt.get({ url })
     const cookie = await cookieJar.findCookie('hello.world', '/', 'cookie1')
@@ -127,7 +127,7 @@ describe('RequestIt', () => {
   })
 
   it('should should return same instance of RequestItCookieJar', async () => {
-    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing']})
+    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing'] })
 
     const originCookieJar = new RequestItCookieJar()
     const { cookieJar } = await RequestIt.get({ url, cookieJar: originCookieJar })
@@ -156,7 +156,10 @@ describe('RequestIt', () => {
     nock(origin).get(path).reply(304, '', { Location: 'https://example2.sample/path2' })
     nock('https://example2.sample').get('/path2').reply(200, sample)
     nock(origin).get(path).reply(301, '', { Location: 'https://example2.sample/path2' })
-    nock('https://example2.sample').get('/path2').reply(302, '', { Location: 'https://example2.sample/path3' })
+    nock('https://example2.sample').get('/path2').reply(302, '', {
+      Location: 'https://example2.sample/path3',
+      'Set-Cookie': ['cookie1=testing']
+    })
     nock('https://example2.sample').get('/path3').reply(303, '', { Location: 'https://example2.sample/path4' })
     nock('https://example2.sample').get('/path4').reply(303, '', { Location: 'https://example2.sample/path5' })
     nock(origin).get(path).reply(300, '', { Location: 'https://example2.sample/path2' })

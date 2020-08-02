@@ -205,9 +205,19 @@ export class RequestIt {
                     VALID_REDIRECT.has(response.statusCode) &&
                     redirectCount < MAX_REDIRECTS
                   ) {
-                    return (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1)
-                      .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
-                      .catch((error: any) => reject(error))
+
+                    if (typeof response.headers['set-cookie'] === 'undefined') {
+                      return (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1)
+                        .then((incomingMessage: IncomingMessage) => resolve(incomingMessage))
+                        .catch((error: any) => reject(error))
+                    } else {
+                      const promises = response.headers['set-cookie']
+                        .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
+
+                      return Promise.all(promises)
+                        .then(() => (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1))
+                        .catch((error: any) => reject(error))
+                    }
                   } else if (redirectCount === MAX_REDIRECTS) {
                     reject(new Error('The number of redirects has exceeded the max of ' + MAX_REDIRECTS.toString()))
                   }
@@ -246,10 +256,7 @@ export class RequestIt {
                     const promises = response.headers['set-cookie']
                       .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
 
-                    Promise.all(promises).then(
-                      () => resolve(response),
-                      (reason) => reject(reason)
-                    )
+                    Promise.all(promises).then(() => resolve(response))
                   }
                 } catch (err) {
                   reject(err)
