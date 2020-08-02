@@ -77,9 +77,13 @@ export class RequestIt {
     return false
   }
 
-  private prepareBody (body: string | Buffer | object | any[], json: any): string | Buffer {
+  private prepareBody (body: string | Buffer | object | any[], json: any, form: { [key: string]: string | boolean | number }): string | Buffer {
     if (this.jsonify(body, json)) {
       return JSON.stringify(body || json)
+    }
+
+    if (!this.isNullOrUndefined(form)) {
+      return new URLSearchParams(form as Record<string, string>).toString()
     }
 
     if (this.isNullOrUndefined(body)) {
@@ -89,7 +93,7 @@ export class RequestIt {
     return body as string | Buffer
   }
 
-  private prepareOptions (options: RequestOptions, body: string | Buffer, cookieString: string, jsonify: boolean): RequestOptions {
+  private prepareOptions (options: RequestOptions, body: string | Buffer, cookieString: string, jsonify: boolean, formify: boolean): RequestOptions {
     options = this.cleanUpOptions(options)
     let contentTypeExists = false
     let contentLengthExists = false
@@ -102,6 +106,13 @@ export class RequestIt {
     if (!contentTypeExists && jsonify) {
       options.headers = {
         'Content-Type': 'application/json',
+        ...options.headers
+      }
+    }
+
+    if (!contentTypeExists && formify) {
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
         ...options.headers
       }
     }
@@ -146,15 +157,17 @@ export class RequestIt {
           params,
           url,
           json,
+          form,
           rejectBadJson,
           responseType,
           cookieJar,
           followRedirect
         } = options as RequestOptions
         const internalUrl = new URL(url as string)
-        const internalBody = self.prepareBody(body, json)
+        const internalBody = self.prepareBody(body, json, form)
         const protocol = self.getProtocol(internalUrl) === 'https' ? https : http
         const jsonify = self.jsonify(body, json)
+        const formify = !jsonify && typeof form !== 'undefined'
         const internalCookieJar = typeof cookieJar === 'undefined'
           ? self.cookieJar
           : RequestItCookieJar.fromCookieJar(cookieJar)
@@ -162,7 +175,8 @@ export class RequestIt {
           options as RequestOptions,
           internalBody,
           internalCookieJar.getCookieStringSync(internalUrl.toString()),
-          jsonify
+          jsonify,
+          formify
         )
 
         internalOptions.method = internalOptions.method || 'GET'

@@ -163,4 +163,12 @@ describe('RequestIt', () => {
 
     assert.strictEqual(statusCode, 300)
   })
+
+  it('should handle forms', async () => {
+    nock(origin).get(path).reply(200, sample)
+
+    const { body } = await RequestIt.get({ url, form: { hello: 'world' } })
+
+    assert.deepStrictEqual(body, sample)
+  })
 })
