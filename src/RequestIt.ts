@@ -215,7 +215,7 @@ export class RequestIt {
                         .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
 
                       return Promise.all(promises)
-                        .then(() => (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1))
+                        .then(() => (self as any).go({ ...options as RequestOptions, url: response.headers.location }, redirectCount + 1).then((incomingMessage: IncomingMessage) => resolve(incomingMessage)))
                         .catch((error: any) => reject(error))
                     }
                   } else if (redirectCount === MAX_REDIRECTS) {
