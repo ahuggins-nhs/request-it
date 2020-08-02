@@ -243,7 +243,8 @@ export class RequestIt {
                   if (typeof response.headers['set-cookie'] === 'undefined') {
                     resolve(response)
                   } else {
-                    const promises = response.headers['set-cookie'].map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()))
+                    const promises = response.headers['set-cookie']
+                      .map((cookie) => internalCookieJar.setCookie(cookie, internalUrl.toString()).catch(() => {}))
 
                     Promise.all(promises).then(
                       () => resolve(response),

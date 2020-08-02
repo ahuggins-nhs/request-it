@@ -5,7 +5,7 @@ import { CookieJar } from 'tough-cookie'
 import * as assert from 'assert'
 import * as http from 'http'
 
-const url = new URL('https://example.sample/path')
+const url = new URL('https://test.example.sample/path')
 const origin = url.origin
 const path = url.pathname
 const sample = { hello: 'world!' }
@@ -111,10 +111,19 @@ describe('RequestIt', () => {
     nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing']})
 
     const { body, cookieJar } = await RequestIt.get({ url })
-    const cookie = await cookieJar.findCookie('example.sample', '/', 'cookie1')
+    const cookie = await cookieJar.findCookie('test.example.sample', '/', 'cookie1')
 
     assert.deepStrictEqual(body, sample)
     assert.deepStrictEqual(cookie.value, 'testing')
+  })
+
+  it('should ignore invalid domain cookies', async () => {
+    nock(origin).get(path).reply(200, sample, { 'Set-Cookie': ['cookie1=testing; path=/; domain=.hello.world']})
+
+    const { cookieJar } = await RequestIt.get({ url })
+    const cookie = await cookieJar.findCookie('hello.world', '/', 'cookie1')
+
+    assert.strictEqual(cookie, undefined)
   })
 
   it('should should return same instance of RequestItCookieJar', async () => {
@@ -122,7 +131,7 @@ describe('RequestIt', () => {
 
     const originCookieJar = new RequestItCookieJar()
     const { cookieJar } = await RequestIt.get({ url, cookieJar: originCookieJar })
-    const cookie = await originCookieJar.findCookie('example.sample', '/', 'cookie1')
+    const cookie = await originCookieJar.findCookie('test.example.sample', '/', 'cookie1')
 
     assert.deepStrictEqual(cookieJar, originCookieJar)
     assert.deepStrictEqual(cookie.value, 'testing')
