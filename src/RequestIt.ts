@@ -32,10 +32,7 @@ export class RequestIt {
   }
 
   private setMaxRedirects (maxRedirects?: number) {
-    this.maxRedirects = Math.min(
-      typeof maxRedirects === 'number' ? maxRedirects : MAX_REDIRECTS,
-      REDIRECT_LIMIT
-    )
+    this.maxRedirects = Math.min(typeof maxRedirects === 'number' ? maxRedirects : MAX_REDIRECTS, REDIRECT_LIMIT)
   }
 
   private getProtocol (url: string | URL): string {
