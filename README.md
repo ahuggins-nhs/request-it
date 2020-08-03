@@ -1,10 +1,10 @@
-# Request-It
+# RequestIt Client
 
-A stupidly simple HTTP client for Node-JS that should just work. Built-in support for cookies, JSON, and up to 3 redirects.
+A stupidly simple HTTP client for Node-JS that should just work. Built-in support for cookies, JSON, and may follow up to a max of 20 redirects.
 
 ## Usage
 
-Install via NPM and require in your project. Then request it and go!
+Install via [NPM](https://www.npmjs.com/package/request-it-client) and require in your project. Then request it and go!
 
 ```js
 const { RequestIt } = require('request-it-client')
