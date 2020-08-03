@@ -1,19 +1,20 @@
-import { Cookie, CookieJar, MemoryCookieStore, Store } from 'tough-cookie'
+import { CookieJar, MemoryCookieStore } from 'tough-cookie'
+import { Cookie, Store } from 'tough-cookie'
 import { promisify } from 'util'
 
-declare module 'tough-cookie' {
-  interface CookieJar {
-    store: Store
-  }
-
-  interface Store {
-    findCookie(domain: string, path: string, key: string): Promise<Cookie | null>
-  }
+interface RequestItStore extends Store {
+  findCookie(domain: string, path: string, key: string): Promise<Cookie | null>
 }
 
-export interface RequestItCookieJar {
-  getCookieString(...args: any[]): Promise<string>
-  setCookie(...args: any[]): Promise<Cookie>
+export interface RequestItCookieJar extends CookieJar {
+  store: RequestItStore
+
+  getCookieString(currentUrl: string, options?: CookieJar.GetCookiesOptions | Function): Promise<string>
+  setCookie(
+    cookieOrString: Cookie | string,
+    currentUrl: string,
+    options?: CookieJar.SetCookieOptions | Function
+  ): Promise<Cookie>
 }
 
 export class RequestItCookieJar extends CookieJar {
