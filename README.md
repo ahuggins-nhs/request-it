@@ -44,13 +44,15 @@ See NodeJS docs for [details](https://nodejs.org/docs/latest-v12.x/api/http.html
 
 - **Extended Properties**
   - `url: string | URL`
-  - `cookieJar?: RequestItCookieJar | CookieJar`
-  - `body?: string | Buffer | object | any[]`
-  - `json?: object | any[]`
-  - `responseType?: 'json'`
-  - `rejectBadJson?: boolean`
-  - `followRedirect?: boolean`
-  - `params?: { [key: string]: string | boolean | number }`
+  - `cookieJar?: RequestItCookieJar | CookieJar`; Support for Tough Cookie cookie jars.
+  - `body?: string | Buffer | object | any[]`; Raw data to send, an object or array will be JSONified.
+  - `json?: object | any[]`; Support for JSON data.
+  - `form?: { [key: string]: string | boolean | number }` Support for forms data.
+  - `responseType?: 'json'`; Any response will attempt to be parsed regardless of content-type.
+  - `rejectBadJson?: boolean`; Setting to `true` will throw an error on unparsable JSON.
+  - `followRedirect?: boolean`; Set to `true` by default, controls whther or not to follow redirects.
+  - `maxRedirects?: number`; Maximum number of redirects to follow with a hard limit of 20, defaults to 3.
+  - `params?: { [key: string]: string | boolean | number }`; URL parameters to pass.
 
 ### `interface IncomingMessage`
 

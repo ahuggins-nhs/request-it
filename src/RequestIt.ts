@@ -5,6 +5,7 @@ import { RequestOptions, IncomingMessage } from './Interfaces'
 import { RequestItCookieJar } from './RequestItCookieJar'
 
 const MAX_REDIRECTS = 3
+const REDIRECT_LIMIT = 20
 const VALID_REDIRECT: ReadonlySet<number> = new Set([300, 301, 302, 303, 304, 307, 308])
 
 /** Node.js library for Promise-based, asynchronous http/s requests. */
@@ -12,6 +13,8 @@ export class RequestIt {
   /** @param {RequestOptions} [options={}] - Default options. Object like NodeJS RequestOptions, but with additional parameters accepted. */
   constructor (options: RequestOptions = {}) {
     this.options = this.getSafeOptions(options)
+
+    this.setMaxRedirects(this.options.maxRedirects)
 
     if (this.isNullOrUndefined(this.options.cookieJar)) {
       this.cookieJar = new RequestItCookieJar()
@@ -22,9 +25,17 @@ export class RequestIt {
 
   options: RequestOptions
   cookieJar: RequestItCookieJar
+  maxRedirects: number
 
   private isNullOrUndefined (value: any): boolean {
     return typeof value === 'undefined' || value === null
+  }
+
+  private setMaxRedirects (maxRedirects?: number) {
+    this.maxRedirects = Math.min(
+      typeof maxRedirects === 'number' ? maxRedirects : MAX_REDIRECTS,
+      REDIRECT_LIMIT
+    )
   }
 
   private getProtocol (url: string | URL): string {
@@ -167,7 +178,8 @@ export class RequestIt {
           rejectBadJson,
           responseType,
           cookieJar,
-          followRedirect
+          followRedirect,
+          maxRedirects
         } = options as RequestOptions
         const internalUrl = new URL(url as string)
         const internalBody = self.prepareBody(body, json, form)
@@ -192,6 +204,8 @@ export class RequestIt {
           }
         }
 
+        self.setMaxRedirects(maxRedirects)
+
         const responseBufs: Buffer[] = []
         const req = protocol.request(internalUrl, internalOptions, (response: IncomingMessage) => {
           try {
@@ -205,7 +219,7 @@ export class RequestIt {
                   followRedirect &&
                   response.headers.location &&
                   VALID_REDIRECT.has(response.statusCode) &&
-                  redirectCount < MAX_REDIRECTS
+                  redirectCount < self.maxRedirects
                 ) {
                   if (typeof response.headers['set-cookie'] === 'undefined') {
                     return (self as any)
@@ -237,8 +251,8 @@ export class RequestIt {
                       )
                       .catch((error: any) => reject(error))
                   }
-                } else if (redirectCount === MAX_REDIRECTS) {
-                  reject(new Error('The number of redirects has exceeded the max of ' + MAX_REDIRECTS.toString()))
+                } else if (redirectCount === self.maxRedirects) {
+                  reject(new Error('The number of redirects has exceeded the max of ' + self.maxRedirects.toString()))
                 }
 
                 const rawResponse = Buffer.concat(responseBufs)

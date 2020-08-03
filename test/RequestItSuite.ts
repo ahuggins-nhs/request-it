@@ -215,12 +215,18 @@ describe('RequestIt', () => {
     nock('https://example2.sample')
       .get('/path3')
       .reply(303, '', { Location: 'https://example2.sample/path4' })
-    nock('https://example2.sample')
-      .get('/path4')
-      .reply(303, '', { Location: 'https://example2.sample/path5' })
     nock(origin)
       .get(path)
       .reply(300, '', { Location: 'https://example2.sample/path2' })
+    nock(origin)
+      .get(path)
+      .reply(307, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample')
+      .get('/path2')
+      .reply(308, '', { Location: 'https://example2.sample/path2' })
+    nock('https://example2.sample')
+      .get('/path3')
+      .reply(200, sample)
 
     const { body } = await RequestIt.get(url)
 
@@ -232,6 +238,9 @@ describe('RequestIt', () => {
     const { statusCode } = await RequestIt.get({ url, followRedirect: false })
 
     assert.strictEqual(statusCode, 300)
+    await assert.rejects(async () => {
+      await RequestIt.get({ url, maxRedirects: 1 })
+    })
   })
 
   it('should handle forms', async () => {

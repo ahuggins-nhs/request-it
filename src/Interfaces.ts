@@ -11,6 +11,7 @@ export interface RequestOptions extends http.RequestOptions {
   responseType?: 'json'
   rejectBadJson?: boolean
   followRedirect?: boolean
+  maxRedirects?: number
   params?: { [key: string]: string | boolean | number }
 }
 
