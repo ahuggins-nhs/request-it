@@ -85,25 +85,29 @@ export class RequestIt {
     body: string | Buffer | object | any[],
     json: any,
     form: { [key: string]: string | boolean | number }
-  ): string | Buffer {
+  ): Buffer {
+    if (typeof body === 'string') {
+      return Buffer.from(body, 'utf8')
+    }
+
     if (this.jsonify(body, json)) {
-      return JSON.stringify(body || json)
+      return Buffer.from(JSON.stringify(body || json), 'utf8')
     }
 
     if (!this.isNullOrUndefined(form)) {
-      return new URLSearchParams(form as Record<string, string>).toString()
+      return Buffer.from(new URLSearchParams(form as Record<string, string>).toString(), 'utf8')
     }
 
     if (this.isNullOrUndefined(body)) {
-      return ''
+      return Buffer.from('', 'utf8')
     }
 
-    return body as string | Buffer
+    return Buffer.from(body)
   }
 
   private prepareOptions (
     options: RequestOptions,
-    body: string | Buffer,
+    body: Buffer,
     cookieString: string,
     jsonify: boolean,
     formify: boolean
